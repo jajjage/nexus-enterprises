@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PAYMENT_PENDING
+  PAYMENT_CONFIRMED
+  IN_PROGRESS
+  ACTION_REQUIRED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  PAYSTACK
+  FLUTTERWAVE
+}
+
+model Order {
+  id              String          @id @default(cuid())
+  orderNumber     String          @unique
+  trackingToken   String          @unique
+  serviceSlug     String
+  serviceName     String
+  clientName      String
+  clientEmail     String
+  clientPhone     String
+  companyName     String?
+  status          OrderStatus     @default(PAYMENT_PENDING)
+  amountKobo      Int?
+  paymentProvider PaymentProvider?
+  paymentReference String?
+  logs            OrderLog[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([createdAt])
+  @@index([status, createdAt])
+}
+
+model OrderLog {
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  note      String
+  createdAt DateTime    @default(now())
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
+}
+
+model Post {
+  id         String   @id @default(uuid())
+  title      String
+  slug       String   @unique
+  excerpt    String?
+  content    String
+  coverImage String?
+  published  Boolean  @default(false)
+  readTime   Int?
+  authorName String   @default("Admin")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Subscriber {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model AdminUser {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  password  String // Hashed password
+  role      String   @default("ADMIN") // For future multi-user scaling
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
