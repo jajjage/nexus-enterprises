@@ -1,11 +1,23 @@
 import Link from "next/link";
 import { Facebook, Linkedin, MapPin, Phone, Twitter } from "lucide-react";
-import { contactInfo, externalLinks, quickLinks } from "@/lib/content";
+import { contactInfo, externalLinks, footerSocials, quickLinks } from "@/lib/content";
+import { FOOTER_LINKS } from "@/config/routes";
 
 const socialMap = {
   X: Twitter,
   LinkedIn: Linkedin,
   Facebook,
+};
+
+const getQuickLinkHref = (label: string): string => {
+  const linkMap: Record<string, string> = {
+    Home: FOOTER_LINKS.HOME,
+    "About Us": FOOTER_LINKS.ABOUT,
+    Services: FOOTER_LINKS.SERVICES,
+    Resources: FOOTER_LINKS.BLOG,
+    Contact: "#footer",
+  };
+  return linkMap[label] || "#";
 };
 
 export function SiteFooter() {
@@ -22,16 +34,21 @@ export function SiteFooter() {
             Trusted support for CAC registration, tax setup, and corporate compliance.
           </p>
           <div className="mt-5 flex items-center gap-3">
-            {Object.entries(socialMap).map(([label, Icon]) => (
-              <Link
-                key={label}
-                href="#"
-                aria-label={label}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 text-slate-100 transition hover:bg-white/10"
-              >
-                <Icon className="h-4 w-4" />
-              </Link>
-            ))}
+            {footerSocials.map((social) => {
+              const Icon = socialMap[social.label as keyof typeof socialMap];
+              return Icon ? (
+                <Link
+                  key={social.label}
+                  href={social.href}
+                  aria-label={social.label}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 text-slate-100 transition hover:bg-white/10"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Icon className="h-4 w-4" />
+                </Link>
+              ) : null;
+            })}
           </div>
         </div>
 
@@ -40,7 +57,7 @@ export function SiteFooter() {
           <ul className="mt-4 space-y-2 text-sm text-slate-300">
             {quickLinks.map((item) => (
               <li key={item}>
-                <Link href="#" className="transition hover:text-white">
+                <Link href={getQuickLinkHref(item)} className="transition hover:text-white">
                   {item}
                 </Link>
               </li>

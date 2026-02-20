@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { logoutAction } from "./login/actions";
 import { LogOut } from "lucide-react";
+import { AdminSidebar } from "./admin-sidebar";
 
 export default async function AdminLayout({
   children,
@@ -41,8 +42,11 @@ export default async function AdminLayout({
         </div>
       </header>
 
-      {/* Page Content */}
-      {children}
+      {/* Admin Layout with Sidebar */}
+      <div className="flex min-h-[calc(100vh-64px)] bg-white">
+        <AdminSidebar />
+        <main className="flex-1 overflow-auto">{children}</main>
+      </div>
     </>
   );
 }

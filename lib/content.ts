@@ -25,10 +25,10 @@ export type PartnerLogo = {
 };
 
 export const navItems: NavItem[] = [
-  { label: "Home", href: "#" },
-  { label: "About Us", href: "#who-we-are" },
-  { label: "Services", href: "#services" },
-  { label: "Resources", href: "#newsletter" },
+  { label: "Home", href: "/" },
+  { label: "About Us", href: "/#who-we-are" },
+  { label: "Services", href: "/#services" },
+  { label: "Resources", href: "/blog" },
   { label: "Contact", href: "#footer" },
 ];
 
@@ -105,27 +105,27 @@ export const partnerLogos: PartnerLogo[] = [
   {
     name: "CAC",
     image: "https://via.placeholder.com/180x64?text=CAC",
-    href: "#",
+    href: "https://www.cac.gov.ng",
   },
   {
     name: "FIRS",
     image: "https://via.placeholder.com/180x64?text=FIRS",
-    href: "#",
+    href: "https://www.firs.gov.ng",
   },
   {
     name: "SCUML",
     image: "https://via.placeholder.com/180x64?text=SCUML",
-    href: "#",
+    href: "https://scuml.org",
   },
   {
     name: "NIPC",
     image: "https://via.placeholder.com/180x64?text=NIPC",
-    href: "#",
+    href: "https://www.nipc.gov.ng",
   },
   {
     name: "SMEDAN",
     image: "https://via.placeholder.com/180x64?text=SMEDAN",
-    href: "#",
+    href: "https://www.smedan.gov.ng",
   },
 ];
 
@@ -144,14 +144,14 @@ export const contactInfo = {
 };
 
 export const footerSocials = [
-  { label: "X", href: "#" },
-  { label: "LinkedIn", href: "#" },
-  { label: "Facebook", href: "#" },
+  { label: "X", href: "https://twitter.com" },
+  { label: "LinkedIn", href: "https://linkedin.com" },
+  { label: "Facebook", href: "https://facebook.com" },
 ];
 
 export const whoWeAreCta = [
-  { label: "Learn More", href: "#", variant: "primary" as const },
-  { label: "Contact Us", href: "#", variant: "secondary" as const },
+  { label: "Learn More", href: "/blog", variant: "primary" as const },
+  { label: "Contact Us", href: "#footer", variant: "secondary" as const },
 ];
 
 export const coreServiceIcon = {

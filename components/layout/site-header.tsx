@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Menu, Search, X } from "lucide-react";
 import { useState } from "react";
 import type { NavItem } from "@/lib/content";
+import { CTA_BUTTONS } from "@/config/routes";
 
 type SiteHeaderProps = {
   navItems: NavItem[];
@@ -15,7 +16,7 @@ export function SiteHeader({ navItems }: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="site-container flex h-20 items-center justify-between gap-4">
-        <Link href="#" className="shrink-0" aria-label="Nexus Enterprises Home">
+        <Link href="/" className="shrink-0" aria-label="Nexus Enterprises Home">
           <div className="rounded-sm border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-[var(--color-primary)]">
             NEXUS
           </div>
@@ -41,13 +42,13 @@ export function SiteHeader({ navItems }: SiteHeaderProps) {
             <Search className="h-4 w-4" />
           </button>
           <Link
-            href="#"
+            href={CTA_BUTTONS.REGISTER_BUSINESS}
             className="inline-flex h-10 items-center rounded-md bg-[var(--color-primary)] px-4 text-sm font-semibold text-white transition hover:opacity-90"
           >
             Register Business
           </Link>
           <Link
-            href="#"
+            href={CTA_BUTTONS.TRACK_APPLICATION}
             className="inline-flex h-10 items-center rounded-md border border-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-primary)] transition hover:bg-slate-50"
           >
             Track Application
@@ -81,13 +82,13 @@ export function SiteHeader({ navItems }: SiteHeaderProps) {
           ))}
           <div className="mt-3 grid gap-2 pb-2">
             <Link
-              href="#"
+              href={CTA_BUTTONS.REGISTER_BUSINESS}
               className="inline-flex h-11 items-center justify-center rounded-md bg-[var(--color-primary)] px-4 text-sm font-semibold text-white"
             >
               Register Business
             </Link>
             <Link
-              href="#"
+              href={CTA_BUTTONS.TRACK_APPLICATION}
               className="inline-flex h-11 items-center justify-center rounded-md border border-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-primary)]"
             >
               Track Application
