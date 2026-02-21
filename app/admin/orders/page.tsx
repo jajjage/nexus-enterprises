@@ -11,10 +11,10 @@ export default async function AdminOrdersPage() {
       <div className="site-container">
         <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-secondary)]">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-(--color-secondary)">
               Admin Dashboard
             </p>
-            <h1 className="mt-2 flex items-center gap-2 text-3xl font-semibold text-[var(--color-primary)]">
+            <h1 className="mt-2 flex items-center gap-2 text-3xl font-semibold text-(--color-primary)">
               <ClipboardList className="h-7 w-7" />
               Orders
             </h1>

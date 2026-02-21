@@ -12,7 +12,7 @@ export type ServiceConfig = {
   slug: string;
   title: string;
   description: string;
-  amountKobo?: number;
+  amountKobo: number;
 };
 
 export type OrderListRow = {

@@ -26,7 +26,7 @@ export function AdminSidebar() {
               href={item.href}
               className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${
                 isActive
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
+                  ? "bg-(--color-primary) text-white shadow-sm"
                   : "text-slate-700 hover:bg-slate-200"
               }`}
             >

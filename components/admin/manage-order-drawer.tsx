@@ -30,7 +30,7 @@ type ManageOrderDrawerProps = {
 
 export function ManageOrderDrawer({ orders }: ManageOrderDrawerProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [status, setStatus] = useState<OrderStatusValue>("PAYMENT_PENDING");
+  const [status, setStatus] = useState<OrderStatusValue>("AWAITING_PAYMENT");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();

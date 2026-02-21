@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 const updateOrderSchema = z.object({
   orderId: z.string().trim().min(1),
   status: z.enum([
-    "PAYMENT_PENDING",
+    "AWAITING_PAYMENT",
     "PAYMENT_CONFIRMED",
     "IN_PROGRESS",
     "ACTION_REQUIRED",

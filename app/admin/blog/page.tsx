@@ -21,12 +21,12 @@ export default async function AdminBlogPage() {
       <div className="site-container space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-secondary)]">Admin</p>
-            <h1 className="text-3xl font-semibold text-[var(--color-primary)]">Blog Posts</h1>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-(--color-secondary)">Admin</p>
+            <h1 className="text-3xl font-semibold text-(--color-primary)">Blog Posts</h1>
           </div>
           <Link
             href="/admin/blog/new"
-            className="inline-flex h-10 items-center rounded-md bg-[var(--color-primary)] px-4 text-sm font-semibold text-white"
+            className="inline-flex h-10 items-center rounded-md bg-(--color-primary) px-4 text-sm font-semibold text-white"
           >
             Create New Post
           </Link>

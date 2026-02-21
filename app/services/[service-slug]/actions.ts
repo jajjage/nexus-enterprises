@@ -73,11 +73,11 @@ export async function createOrderAction(formData: FormData): Promise<never> {
           clientEmail: parsed.data.email,
           clientPhone: parsed.data.phone,
           companyName: parsed.data.companyName,
-          status: "PAYMENT_PENDING",
+          status: "AWAITING_PAYMENT",
           amountKobo: service.amountKobo,
           logs: {
             create: {
-              status: "PAYMENT_PENDING",
+              status: "AWAITING_PAYMENT",
               note: "Order initiated",
             },
           },

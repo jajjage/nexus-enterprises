@@ -24,7 +24,7 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer id="footer" className="bg-[var(--color-primary)] text-slate-100">
+    <footer id="footer" className="bg-(--color-primary) text-slate-100">
       <div className="site-container grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="inline-block rounded-sm border border-white/30 bg-white/10 px-3 py-2 text-sm font-semibold">

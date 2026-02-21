@@ -45,6 +45,7 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-dropzone": "^14.2.3",
+    "react-paystack": "^6.0.0",
     "resend": "^3.4.0",
     "tailwind-merge": "^3.5.0",
     "uploadthing": "^6.7.0",

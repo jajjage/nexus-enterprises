@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, Search, X } from "lucide-react";
 import { useState } from "react";
 import type { NavItem } from "@/lib/content";
@@ -17,9 +18,14 @@ export function SiteHeader({ navItems }: SiteHeaderProps) {
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="site-container flex h-20 items-center justify-between gap-4">
         <Link href="/" className="shrink-0" aria-label="Nexus Enterprises Home">
-          <div className="rounded-sm border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-[var(--color-primary)]">
-            NEXUS
-          </div>
+          <Image
+            src="/logo2.png"
+            alt="Nexus Enterprises"
+            width={192}
+            height={60}
+            className="h-15 w-auto"
+            priority
+          />
         </Link>
 
         <nav className="hidden items-center justify-center gap-7 md:flex">
@@ -27,7 +33,7 @@ export function SiteHeader({ navItems }: SiteHeaderProps) {
             <Link
               key={item.label}
               href={item.href}
-              className="text-sm font-medium text-slate-700 transition hover:text-[var(--color-primary)]"
+              className="text-sm font-medium text-slate-700 transition hover:text-(--color-primary)"
             >
               {item.label}
             </Link>
@@ -43,13 +49,13 @@ export function SiteHeader({ navItems }: SiteHeaderProps) {
           </button>
           <Link
             href={CTA_BUTTONS.REGISTER_BUSINESS}
-            className="inline-flex h-10 items-center rounded-md bg-[var(--color-primary)] px-4 text-sm font-semibold text-white transition hover:opacity-90"
+            className="inline-flex h-10 items-center rounded-md bg-(--color-primary) px-4 text-sm font-semibold text-white transition hover:opacity-90"
           >
             Register Business
           </Link>
           <Link
             href={CTA_BUTTONS.TRACK_APPLICATION}
-            className="inline-flex h-10 items-center rounded-md border border-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-primary)] transition hover:bg-slate-50"
+            className="inline-flex h-10 items-center rounded-md border border-(--color-primary) px-4 text-sm font-semibold text-(--color-primary) transition hover:bg-slate-50"
           >
             Track Application
           </Link>
@@ -75,7 +81,7 @@ export function SiteHeader({ navItems }: SiteHeaderProps) {
               key={item.label}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="rounded-md px-2 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-[var(--color-primary)]"
+              className="rounded-md px-2 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-(--color-primary)"
             >
               {item.label}
             </Link>
@@ -83,13 +89,13 @@ export function SiteHeader({ navItems }: SiteHeaderProps) {
           <div className="mt-3 grid gap-2 pb-2">
             <Link
               href={CTA_BUTTONS.REGISTER_BUSINESS}
-              className="inline-flex h-11 items-center justify-center rounded-md bg-[var(--color-primary)] px-4 text-sm font-semibold text-white"
+              className="inline-flex h-11 items-center justify-center rounded-md bg-(--color-primary) px-4 text-sm font-semibold text-white"
             >
               Register Business
             </Link>
             <Link
               href={CTA_BUTTONS.TRACK_APPLICATION}
-              className="inline-flex h-11 items-center justify-center rounded-md border border-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-primary)]"
+              className="inline-flex h-11 items-center justify-center rounded-md border border-(--color-primary) px-4 text-sm font-semibold text-(--color-primary)"
             >
               Track Application
             </Link>

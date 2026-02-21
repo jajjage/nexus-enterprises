@@ -15,7 +15,7 @@ function TrackLoginForm() {
 
   const errorParam = searchParams.get("error");
   const errorMessages: Record<string, string> = {
-    invalid_token: "Invalid tracking ID. Please check and try again.",
+    invalid_token: "Invalid tracking ID or order number. Please check and try again.",
     server_error: "An error occurred. Please try again.",
   };
 
@@ -24,7 +24,7 @@ function TrackLoginForm() {
     setError("");
     
     if (!token.trim()) {
-      setError("Please enter your tracking ID");
+      setError("Please enter your tracking ID or order number");
       return;
     }
 
@@ -58,16 +58,16 @@ function TrackLoginForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <label htmlFor="token" className="text-sm font-medium text-slate-700">
-            Tracking ID
+            Tracking ID or Order Number
           </label>
           <input
             id="token"
             type="text"
-            placeholder="Enter your tracking ID"
+            placeholder="Enter your tracking ID or order number"
             value={token}
             onChange={(e) => setToken(e.target.value)}
             disabled={isLoading}
-            className="w-full h-12 px-4 rounded-lg border border-slate-300 bg-white text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-12 px-4 rounded-lg border border-slate-300 bg-white text-sm outline-none transition focus:border-(--color-primary) focus:ring-2 focus:ring-(--color-primary)/15 disabled:opacity-50 disabled:cursor-not-allowed"
             required
           />
         </div>
@@ -75,7 +75,7 @@ function TrackLoginForm() {
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full h-12 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white font-medium flex items-center justify-center gap-2"
+          className="w-full h-12 cursor-pointer bg-(--color-primary) hover:bg-(--color-primary)/90 text-white font-medium flex items-center justify-center gap-2"
         >
           {isLoading ? (
             <>
@@ -89,7 +89,7 @@ function TrackLoginForm() {
       </form>
 
       <p className="mt-6 text-center text-xs text-slate-500">
-        Your tracking ID was provided in your order confirmation email.
+        Use the tracking link, tracking ID, or order number from your confirmation email.
       </p>
     </>
   );
@@ -97,14 +97,14 @@ function TrackLoginForm() {
 
 export default function TrackLoginPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center px-4 py-10">
+    <main className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 flex items-center justify-center px-4 py-10">
       <Card className="w-full max-w-md p-8 shadow-lg">
         <div className="space-y-2 mb-6">
-          <h1 className="text-3xl font-semibold text-[var(--color-primary)]">
+          <h1 className="text-3xl font-semibold text-(--color-primary)">
             Track Your Order
           </h1>
           <p className="text-sm text-slate-600">
-            Enter your tracking ID to view the status of your order.
+            Enter your tracking ID or order number to view your order status.
           </p>
         </div>
 

@@ -4,9 +4,11 @@ import { MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PaymentRetry } from "@/components/checkout/payment-retry";
 import { formatDateTime, firstNameOnly, maskEmail, maskPhone } from "@/lib/format";
 import { ORDER_STATUS_BADGE_CLASS, ORDER_STATUS_LABELS, type OrderStatusValue } from "@/lib/order-status";
 import { prisma } from "@/lib/prisma";
+import { PAYSTACK_PUBLIC_KEY } from "@/lib/paystack";
 import * as jose from "jose";
 
 export const dynamic = "force-dynamic";
@@ -79,7 +81,7 @@ export default async function TrackOrderPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm text-slate-500">Order ID</p>
-              <h1 className="text-2xl font-semibold text-[var(--color-primary)]">{order.orderNumber}</h1>
+              <h1 className="text-2xl font-semibold text-(--color-primary)">{order.orderNumber}</h1>
               <p className="mt-1 text-sm text-slate-600">
                 {firstNameOnly(order.clientName)} | {maskEmail(order.clientEmail)} | {maskPhone(order.clientPhone)}
               </p>
@@ -90,15 +92,24 @@ export default async function TrackOrderPage() {
           </div>
         </Card>
 
+        {currentStatus === "AWAITING_PAYMENT" && PAYSTACK_PUBLIC_KEY && (
+          <PaymentRetry
+            orderNumber={order.orderNumber}
+            amount={order.amountKobo ?? 0}
+            email={order.clientEmail}
+            publicKey={PAYSTACK_PUBLIC_KEY}
+          />
+        )}
+
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-[var(--color-primary)]">Progress Timeline</h2>
+          <h2 className="text-lg font-semibold text-(--color-primary)">Progress Timeline</h2>
           <div className="mt-6 space-y-5">
             {(order.logs as TrackerLog[]).map((log) => {
               const logStatus = log.status;
               return (
                 <div key={log.id} className="relative flex gap-4 pl-6">
-                  <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-[var(--color-primary)]" />
-                  <div className="-ml-[19px] mt-4 h-12 w-px bg-slate-200 last:hidden" />
+                  <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-(--color-primary)" />
+                  <div className="-ml-4.75 mt-4 h-12 w-px bg-slate-200 last:hidden" />
                   <div className="space-y-1">
                     <Badge className={ORDER_STATUS_BADGE_CLASS[logStatus]}>
                       {ORDER_STATUS_LABELS[logStatus]}

@@ -6,6 +6,7 @@
         "goauthentik",
         "healthcheck",
         "isready",
+        "NEXTAUTH",
         "PAYSTACK",
         "uploadthing"
     ]

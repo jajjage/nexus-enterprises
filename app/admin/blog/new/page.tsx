@@ -11,7 +11,7 @@ export default function NewPostPage() {
   return (
     <main className="section-space bg-slate-50">
       <div className="site-container space-y-4">
-        <h1 className="text-3xl font-semibold text-[var(--color-primary)]">New Post</h1>
+        <h1 className="text-3xl font-semibold text-(--color-primary)">New Post</h1>
         <PostEditor onSave={handleSave} />
       </div>
     </main>

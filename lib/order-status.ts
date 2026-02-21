@@ -1,5 +1,5 @@
 export const ORDER_STATUS_OPTIONS = [
-  "PAYMENT_PENDING",
+  "AWAITING_PAYMENT",
   "PAYMENT_CONFIRMED",
   "IN_PROGRESS",
   "ACTION_REQUIRED",
@@ -10,7 +10,7 @@ export const ORDER_STATUS_OPTIONS = [
 export type OrderStatusValue = (typeof ORDER_STATUS_OPTIONS)[number];
 
 export const ORDER_STATUS_LABELS: Record<OrderStatusValue, string> = {
-  PAYMENT_PENDING: "Payment Pending",
+  AWAITING_PAYMENT: "Awaiting Payment",
   PAYMENT_CONFIRMED: "Payment Confirmed",
   IN_PROGRESS: "In Progress",
   ACTION_REQUIRED: "Action Required",
@@ -19,10 +19,10 @@ export const ORDER_STATUS_LABELS: Record<OrderStatusValue, string> = {
 };
 
 export const ORDER_STATUS_BADGE_CLASS: Record<OrderStatusValue, string> = {
-  PAYMENT_PENDING: "bg-amber-50 text-amber-700 ring-amber-200",
-  PAYMENT_CONFIRMED: "bg-sky-50 text-sky-700 ring-sky-200",
-  IN_PROGRESS: "bg-blue-50 text-blue-700 ring-blue-200",
-  ACTION_REQUIRED: "bg-orange-50 text-orange-700 ring-orange-200",
-  COMPLETED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  CANCELLED: "bg-rose-50 text-rose-700 ring-rose-200",
+  AWAITING_PAYMENT: "bg-yellow-100 text-yellow-800",
+  PAYMENT_CONFIRMED: "bg-green-100 text-green-800",
+  IN_PROGRESS: "bg-blue-100 text-blue-800",
+  ACTION_REQUIRED: "bg-orange-100 text-orange-800",
+  COMPLETED: "bg-emerald-100 text-emerald-800",
+  CANCELLED: "bg-red-100 text-red-800",
 };

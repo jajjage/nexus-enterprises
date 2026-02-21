@@ -8,7 +8,7 @@ datasource db {
 }
 
 enum OrderStatus {
-  PAYMENT_PENDING
+  AWAITING_PAYMENT
   PAYMENT_CONFIRMED
   IN_PROGRESS
   ACTION_REQUIRED
@@ -31,7 +31,7 @@ model Order {
   clientEmail     String
   clientPhone     String
   companyName     String?
-  status          OrderStatus     @default(PAYMENT_PENDING)
+  status          OrderStatus     @default(AWAITING_PAYMENT)
   amountKobo      Int?
   paymentProvider PaymentProvider?
   paymentReference String?

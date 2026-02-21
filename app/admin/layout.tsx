@@ -16,7 +16,7 @@ export default async function AdminLayout({
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white shadow-sm">
         <div className="site-container flex h-16 items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-[var(--color-primary)]">Nexus Admin</h1>
+            <h1 className="text-lg font-semibold text-(--color-primary)">Nexus Admin</h1>
           </div>
 
           <div className="flex items-center gap-4">

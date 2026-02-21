@@ -10,11 +10,47 @@ const JWT_SECRET = new TextEncoder().encode(
     "fallback-secret-change-in-production-do-not-use",
 );
 
+function normalizeTrackingInput(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return "";
+
+  // Accept pasted full tracking links and extract the last /track/{id} segment.
+  const trackMarker = "/track/";
+  const markerIndex = trimmed.lastIndexOf(trackMarker);
+  if (markerIndex !== -1) {
+    const value = trimmed.slice(markerIndex + trackMarker.length);
+    return value.split(/[?#]/)[0]?.trim() ?? "";
+  }
+
+  return trimmed;
+}
+
 export async function setClientSession(token: string) {
   try {
-    // Validate that the tracking token exists in the database
-    const order = await prisma.order.findUnique({
-      where: { trackingToken: token },
+    const normalizedInput = normalizeTrackingInput(token);
+
+    if (!normalizedInput) {
+      redirect("/track/login?error=invalid_token");
+    }
+
+    // Accept either tracking token or order number.
+    const order = await prisma.order.findFirst({
+      where: {
+        OR: [
+          {
+            trackingToken: {
+              equals: normalizedInput,
+              mode: "insensitive",
+            },
+          },
+          {
+            orderNumber: {
+              equals: normalizedInput,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
       select: { id: true, trackingToken: true },
     });
 
