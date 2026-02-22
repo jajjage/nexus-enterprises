@@ -7,7 +7,7 @@ import {
   verifyPayment,
   PaystackWebhookPayload,
 } from "@/lib/paystack";
-import { getServiceBySlug } from "@/lib/services";
+import { getCheckoutServiceBySlug } from "@/lib/services";
 import { sendPaymentConfirmationEmail } from "@/lib/email-templates";
 
 /**
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const service = getServiceBySlug(serviceSlug);
+    const service = await getCheckoutServiceBySlug(serviceSlug);
     if (!service) {
       console.error(`Unknown service: ${serviceSlug}`);
       return NextResponse.json(
@@ -243,6 +243,7 @@ export async function POST(request: NextRequest) {
       data: {
         orderNumber,
         trackingToken,
+        serviceId: service.id,
         serviceSlug,
         serviceName: service.title,
         clientName: name,

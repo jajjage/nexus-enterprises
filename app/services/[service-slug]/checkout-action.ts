@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getServiceBySlug } from "@/lib/services";
+import { getCheckoutServiceBySlug } from "@/lib/services";
 import {
   generatePaymentReference,
   PAYSTACK_PUBLIC_KEY,
@@ -53,8 +53,12 @@ async function createOrderRecord(
   email: string,
   phone: string,
   companyName: string | undefined,
-  serviceSlug: string,
-  amountKobo: number,
+  service: {
+    id: string;
+    slug: string;
+    title: string;
+    amountKobo: number;
+  },
   paymentReference?: string
 ) {
   const now = new Date();
@@ -72,12 +76,6 @@ async function createOrderRecord(
   const dateSegment = `${now.getFullYear()}${String(
     now.getMonth() + 1
   ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-
-  // Get service to fetch name
-  const service = getServiceBySlug(serviceSlug);
-  if (!service) {
-    throw new Error("Unknown service selected");
-  }
 
   // Get count of orders created today for order numbering
   const orderCountToday = await prisma.order.count({
@@ -101,14 +99,15 @@ async function createOrderRecord(
     data: {
       orderNumber,
       trackingToken,
-      serviceSlug,
+      serviceId: service.id,
+      serviceSlug: service.slug,
       serviceName: service.title,
       clientName: name,
       clientEmail: email,
       clientPhone: phone,
       companyName,
       status: "AWAITING_PAYMENT",
-      amountKobo,
+      amountKobo: service.amountKobo,
       paymentProvider: "PAYSTACK",
       paymentReference: paymentReference || null,
       logs: {
@@ -144,7 +143,7 @@ export async function prepareCheckout(
     throw new Error(parsed.error.issues[0]?.message || "Invalid form input");
   }
 
-  const service = getServiceBySlug(parsed.data.serviceSlug);
+  const service = await getCheckoutServiceBySlug(parsed.data.serviceSlug);
   if (!service) {
     throw new Error("Unknown service selected");
   }
@@ -168,7 +167,7 @@ export async function prepareCheckout(
       name: parsed.data.name,
       phone: parsed.data.phone,
       companyName: parsed.data.companyName,
-      serviceSlug: parsed.data.serviceSlug,
+      serviceSlug: service.slug,
       serviceName: service.title,
     },
   };
@@ -194,7 +193,7 @@ export async function placeOrder(
     throw new Error(parsed.error.issues[0]?.message || "Invalid form input");
   }
 
-  const service = getServiceBySlug(parsed.data.serviceSlug);
+  const service = await getCheckoutServiceBySlug(parsed.data.serviceSlug);
   if (!service) {
     throw new Error("Unknown service selected");
   }
@@ -204,8 +203,7 @@ export async function placeOrder(
     parsed.data.email,
     parsed.data.phone,
     parsed.data.companyName,
-    parsed.data.serviceSlug,
-    service.amountKobo
+    service
   );
 
   return {

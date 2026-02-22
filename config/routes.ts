@@ -24,6 +24,7 @@ export const ADMIN_ROUTES = {
   LOGIN: '/admin/login',
   DASHBOARD: '/admin',
   ORDERS: '/admin/orders',
+  SERVICES: '/admin/services',
   BLOG: '/admin/blog',
   BLOG_NEW: '/admin/blog/new',
   BLOG_EDIT: (id: string) => `/admin/blog/${id}`,
@@ -63,5 +64,6 @@ export const SOCIAL_LINKS = {
 // Admin navigation
 export const ADMIN_NAV = [
   { label: 'Orders', href: ADMIN_ROUTES.ORDERS },
+  { label: 'Services', href: ADMIN_ROUTES.SERVICES },
   { label: 'Blog', href: ADMIN_ROUTES.BLOG },
 ] as const;

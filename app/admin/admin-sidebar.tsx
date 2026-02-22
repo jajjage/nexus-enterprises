@@ -2,11 +2,12 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { BarChart3, BookOpen } from "lucide-react";
+import { BarChart3, BookOpen, BriefcaseBusiness } from "lucide-react";
 import { ADMIN_NAV } from "@/config/routes";
 
 const navIcons = {
   Orders: BarChart3,
+  Services: BriefcaseBusiness,
   Blog: BookOpen,
 };
 

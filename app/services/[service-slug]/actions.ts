@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getServiceBySlug } from "@/lib/services";
+import { getCheckoutServiceBySlug } from "@/lib/services";
 
 const checkoutSchema = z.object({
   name: z.string().trim().min(2, "Name is required"),
@@ -40,7 +40,7 @@ export async function createOrderAction(formData: FormData): Promise<never> {
     throw new Error(parsed.error.issues[0]?.message || "Invalid form input");
   }
 
-  const service = getServiceBySlug(parsed.data.serviceSlug);
+  const service = await getCheckoutServiceBySlug(parsed.data.serviceSlug);
   if (!service) {
     throw new Error("Unknown service selected");
   }
@@ -67,6 +67,7 @@ export async function createOrderAction(formData: FormData): Promise<never> {
         data: {
           orderNumber,
           trackingToken,
+          serviceId: service.id,
           serviceSlug: service.slug,
           serviceName: service.title,
           clientName: parsed.data.name,

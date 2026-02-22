@@ -1,11 +1,21 @@
 import Link from "next/link";
-import type { ServiceCard } from "@/lib/content";
+import type { ServiceCatalogItem } from "@/lib/types";
 
 type ServicesGridProps = {
-  services: ServiceCard[];
+  services: Array<
+    Pick<ServiceCatalogItem, "id" | "slug" | "title" | "summary" | "category" | "imageUrl" | "amountKobo">
+  >;
 };
 
 export function ServicesGrid({ services }: ServicesGridProps) {
+  const formatNaira = (amountKobo: number | null) => {
+    if (amountKobo === null) return "Price on request";
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+    }).format(amountKobo / 100);
+  };
+
   return (
     <section id="services" className="section-space bg-[var(--color-surface)]">
       <div className="site-container">
@@ -21,12 +31,12 @@ export function ServicesGrid({ services }: ServicesGridProps) {
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {services.map((service) => (
             <article
-              key={service.title}
+              key={service.id}
               className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
             >
               <div className="h-44 overflow-hidden">
                 <img
-                  src={service.image}
+                  src={service.imageUrl}
                   alt={service.title}
                   className="h-full w-full object-cover"
                   loading="lazy"
@@ -37,15 +47,17 @@ export function ServicesGrid({ services }: ServicesGridProps) {
                   <span className="inline-flex rounded-full bg-[var(--color-primary)]/10 px-3 py-1 text-xs font-semibold text-[var(--color-primary)]">
                     {service.category}
                   </span>
-                  <span className="text-xs text-[var(--color-secondary)]">{service.date}</span>
+                  <span className="text-xs text-[var(--color-secondary)]">
+                    {formatNaira(service.amountKobo)}
+                  </span>
                 </div>
 
                 <h3 className="mt-4 text-xl font-semibold leading-snug text-[var(--color-primary)]">
                   {service.title}
                 </h3>
-                <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{service.excerpt}</p>
+                <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{service.summary}</p>
                 <Link
-                  href={service.href}
+                  href={`/services/${service.slug}`}
                   className="mt-4 inline-flex text-sm font-semibold text-[var(--color-accent)] transition hover:underline"
                 >
                   Read more -&gt;

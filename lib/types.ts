@@ -15,6 +15,35 @@ export type ServiceConfig = {
   amountKobo: number;
 };
 
+export type ServiceStatusValue = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+
+export type ServiceCatalogItem = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  description: string;
+  category: string;
+  imageUrl: string;
+  amountKobo: number | null;
+  status: ServiceStatusValue;
+  displayOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type ServiceFormInput = {
+  title: string;
+  slug: string;
+  summary: string;
+  description: string;
+  category: string;
+  imageUrl: string;
+  amountNaira?: number | null;
+  displayOrder: number;
+  status: ServiceStatusValue;
+};
+
 export type OrderListRow = {
   id: string;
   orderNumber: string;
