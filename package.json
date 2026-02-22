@@ -9,14 +9,18 @@
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "db:push": "prisma db push",
     "seed": "tsx prisma/seed.ts",
-    "test": "tsx __tests__/run-tests.ts",
-    "test:auth": "tsx __tests__/admin-auth.test.ts",
-    "test:tracking": "tsx __tests__/tracking.test.ts",
-    "test:middleware": "tsx __tests__/middleware.test.ts",
-    "test:db": "tsx __tests__/database.test.ts"
+    "prepare": "husky",
+    "test": "pnpm test:unit",
+    "test:unit": "vitest run --coverage",
+    "test:unit:watch": "vitest",
+    "test:e2e": "playwright test --project=chromium",
+    "test:all": "pnpm test:unit && pnpm test:e2e",
+    "test:ci": "pnpm prisma:generate && pnpm prisma:migrate:deploy && pnpm seed && pnpm test:all",
+    "test:legacy": "echo \"No legacy __tests__ suite found in this branch.\""
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -53,15 +57,19 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^2.1.8",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
+    "husky": "^9.1.7",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.1.8"
   }
 }

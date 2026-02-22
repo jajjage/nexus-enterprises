@@ -114,7 +114,7 @@ export function ManageOrderDrawer({ orders }: ManageOrderDrawerProps) {
           <article key={order.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-semibold text-[var(--color-primary)]">{order.orderNumber}</p>
+                <p className="font-semibold text-(--color-primary)">{order.orderNumber}</p>
                 <p className="text-sm text-slate-600">{order.clientName}</p>
                 <p className="text-sm text-slate-500">{order.serviceName}</p>
                 <p className="mt-1 text-xs text-slate-500">{formatDateTime(order.createdAt)}</p>
@@ -131,7 +131,7 @@ export function ManageOrderDrawer({ orders }: ManageOrderDrawerProps) {
       </div>
 
       <div
-        className={`fixed inset-0 z-[60] transition ${
+        className={`fixed inset-0 z-60 transition ${
           selectedOrder ? "pointer-events-auto" : "pointer-events-none"
         }`}
         aria-hidden={!selectedOrder}
@@ -155,7 +155,7 @@ export function ManageOrderDrawer({ orders }: ManageOrderDrawerProps) {
             <>
               <div className="mb-6 flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-semibold text-[var(--color-primary)]">Manage Order</h2>
+                  <h2 className="text-lg font-semibold text-(--color-primary)">Manage Order</h2>
                   <p className="mt-1 text-sm text-slate-600">{selectedOrder.orderNumber}</p>
                 </div>
                 <button
