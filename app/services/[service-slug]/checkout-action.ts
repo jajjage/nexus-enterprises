@@ -7,6 +7,7 @@ import {
   generatePaymentReference,
   PAYSTACK_PUBLIC_KEY,
 } from "@/lib/paystack";
+import { sendOrderPlacedAwaitingPaymentEmail } from "@/lib/email-templates";
 
 /**
  * Validate customer details before payment
@@ -25,6 +26,9 @@ const customerSchema = z.object({
 export interface CheckoutResponse {
   success: boolean;
   paymentReference: string;
+  orderNumber: string;
+  trackingToken: string;
+  trackingUrl: string;
   amount: number;
   amountNaira: number;
   publicKey: string;
@@ -124,6 +128,41 @@ async function createOrderRecord(
   return order;
 }
 
+async function notifyOrderPlacedAwaitingPayment(order: {
+  id: string;
+  clientName: string;
+  clientEmail: string;
+  orderNumber: string;
+  serviceName: string;
+  amountKobo: number | null;
+  trackingToken: string;
+}) {
+  try {
+    const emailResult = await sendOrderPlacedAwaitingPaymentEmail({
+      customerName: order.clientName,
+      customerEmail: order.clientEmail,
+      orderNumber: order.orderNumber,
+      serviceName: order.serviceName,
+      amount: (order.amountKobo ?? 0) / 100,
+      trackingToken: order.trackingToken,
+    });
+
+    if (!emailResult.sent) {
+      console.error("Order placed email was not delivered", {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        reason: emailResult.reason,
+      });
+    }
+  } catch (error) {
+    console.error("Order placed email failed unexpectedly", {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      error,
+    });
+  }
+}
+
 /**
  * Prepare checkout: validate customer and generate payment reference
  * This runs on server and returns data needed for Paystack payment
@@ -155,10 +194,25 @@ export async function prepareCheckout(
   }
 
   const paymentReference = generatePaymentReference();
+  const order = await createOrderRecord(
+    parsed.data.name,
+    parsed.data.email,
+    parsed.data.phone,
+    parsed.data.companyName,
+    service,
+    paymentReference,
+  );
+
+  // Pay-now flow creates an awaiting order first so webhook can idempotently confirm it.
+  // We still notify the customer in case they close payment and return later.
+  await notifyOrderPlacedAwaitingPayment(order);
 
   return {
     success: true,
     paymentReference,
+    orderNumber: order.orderNumber,
+    trackingToken: order.trackingToken,
+    trackingUrl: `/track/${order.trackingToken}`,
     amount: service.amountKobo,
     amountNaira: service.amountKobo / 100,
     publicKey: PAYSTACK_PUBLIC_KEY,
@@ -205,6 +259,7 @@ export async function placeOrder(
     parsed.data.companyName,
     service
   );
+  await notifyOrderPlacedAwaitingPayment(order);
 
   return {
     success: true,

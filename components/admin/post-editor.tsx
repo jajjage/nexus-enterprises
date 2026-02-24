@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { estimateReadTime, generateSlug } from "@/lib/blog";
+import { UploadButton, UploadDropzone } from "@/lib/uploadthing";
 
 export type PostEditorInitial = {
   id?: string;
@@ -28,16 +29,42 @@ export type PostSavePayload = PostEditorInitial & { published: boolean };
 type Props = {
   initial?: PostEditorInitial;
   onSave: (payload: PostSavePayload) => Promise<{ id: string }>;
-  onUploadCover?: (file: File) => Promise<string>;
 };
 
-export function PostEditor({ initial, onSave, onUploadCover }: Props) {
+type UploadedFileLike = {
+  url?: string | null;
+  ufsUrl?: string | null;
+  serverData?: {
+    url?: string | null;
+  } | null;
+};
+
+function extractUploadUrl(file?: UploadedFileLike | null) {
+  if (!file) return null;
+  return file.serverData?.url ?? file.ufsUrl ?? file.url ?? null;
+}
+
+function toPlainText(value: string) {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  return "Unable to save post right now.";
+}
+
+export function PostEditor({ initial, onSave }: Props) {
   const router = useRouter();
   const [title, setTitle] = useState(initial?.title ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [excerpt, setExcerpt] = useState(initial?.excerpt ?? "");
   const [published, setPublished] = useState(initial?.published ?? false);
   const [coverImage, setCoverImage] = useState<string | undefined | null>(initial?.coverImage ?? null);
+  const [editorText, setEditorText] = useState(() => toPlainText(initial?.content ?? ""));
   const [error, setError] = useState<string | null>(null);
   const [saving, startTransition] = useTransition();
 
@@ -46,10 +73,13 @@ export function PostEditor({ initial, onSave, onUploadCover }: Props) {
       StarterKit.configure({ heading: false }),
       Heading.configure({ levels: [1, 2, 3] }),
       Placeholder.configure({ placeholder: "Write your post..." }),
-      Link,
+      Link.configure({ openOnClick: false }),
       Image,
     ],
     content: initial?.content ?? "",
+    onUpdate({ editor: currentEditor }) {
+      setEditorText(currentEditor.getText());
+    },
   });
 
   useEffect(() => {
@@ -61,52 +91,122 @@ export function PostEditor({ initial, onSave, onUploadCover }: Props) {
   async function handleSave() {
     if (!editor) return;
     setError(null);
-    const html = editor.getHTML();
+
     if (!title.trim()) {
-      setError("Title is required");
+      setError("Title is required.");
       return;
     }
-    startTransition(async () => {
-      const result = await onSave({
-        id: initial?.id,
-        title: title.trim(),
-        slug: slug.trim() || generateSlug(title),
-        excerpt: excerpt || null,
-        content: html,
-        coverImage: coverImage ?? null,
-        published,
-      });
-      router.replace(`/admin/blog/${result.id}`);
+
+    if (!editorText.trim()) {
+      setError("Content is required.");
+      return;
+    }
+
+    startTransition(() => {
+      void (async () => {
+        try {
+          const result = await onSave({
+            id: initial?.id,
+            title: title.trim(),
+            slug: slug.trim() || generateSlug(title),
+            excerpt: excerpt || null,
+            content: editor.getHTML(),
+            coverImage: coverImage ?? null,
+            published,
+          });
+          router.replace(`/admin/blog/${result.id}`);
+          router.refresh();
+        } catch (saveError) {
+          setError(getErrorMessage(saveError));
+        }
+      })();
     });
   }
 
-  async function handleCoverUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file || !onUploadCover) return;
-    const url = await onUploadCover(file);
-    setCoverImage(url);
+  function handleSetLink() {
+    if (!editor) return;
+
+    const previous = editor.getAttributes("link").href as string | undefined;
+    const url = window.prompt("Enter URL", previous ?? "https://");
+
+    if (url === null) return;
+
+    const trimmed = url.trim();
+    if (!trimmed) {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      return;
+    }
+
+    editor.chain().focus().extendMarkRange("link").setLink({ href: trimmed }).run();
   }
 
-  const readTime = useMemo(() => estimateReadTime(editor?.getText() ?? ""), [editor]);
+  const readTime = useMemo(() => estimateReadTime(editorText), [editorText]);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" onClick={() => editor?.chain().focus().toggleBold().run()}>
+          <Button
+            variant="outline"
+            onClick={() => editor?.chain().focus().toggleBold().run()}
+            disabled={!editor}
+          >
             Bold
           </Button>
-          <Button variant="outline" onClick={() => editor?.chain().focus().toggleItalic().run()}>
+          <Button
+            variant="outline"
+            onClick={() => editor?.chain().focus().toggleItalic().run()}
+            disabled={!editor}
+          >
             Italic
           </Button>
-          <Button variant="outline" onClick={() => editor?.chain().focus().toggleBulletList().run()}>
-            Bullet List
-          </Button>
-          <Button variant="outline" onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}>
+          <Button
+            variant="outline"
+            onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+            disabled={!editor}
+          >
             H2
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => editor?.chain().focus().toggleBulletList().run()}
+            disabled={!editor}
+          >
+            Bullet List
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+            disabled={!editor}
+          >
+            Ordered List
+          </Button>
+          <Button variant="outline" onClick={handleSetLink} disabled={!editor}>
+            {editor?.isActive("link") ? "Update Link" : "Add Link"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => editor?.chain().focus().unsetLink().run()}
+            disabled={!editor?.isActive("link")}
+          >
+            Remove Link
+          </Button>
+          <UploadButton
+            endpoint="editorImage"
+            onClientUploadComplete={(files) => {
+              const url = extractUploadUrl((files?.[0] ?? null) as UploadedFileLike | null);
+              if (!url) {
+                setError("Image upload finished, but no URL was returned.");
+                return;
+              }
+              editor?.chain().focus().setImage({ src: url }).run();
+            }}
+            onUploadError={(uploadError: Error) => {
+              setError(uploadError.message);
+            }}
+          />
         </div>
-        <div className="mt-4 min-h-[360px] rounded-lg border border-slate-200 p-3">
+        <div className="mt-4 min-h-90 rounded-lg border border-slate-200 p-3">
           <EditorContent editor={editor} className="prose prose-sm max-w-none" />
         </div>
       </div>
@@ -127,7 +227,9 @@ export function PostEditor({ initial, onSave, onUploadCover }: Props) {
               onChange={(e) => setPublished(e.target.checked)}
               className="h-4 w-4 rounded border-slate-300"
             />
-            <label htmlFor="published" className="cursor-pointer">Published</label>
+            <label htmlFor="published" className="cursor-pointer">
+              Published
+            </label>
             <span className="ml-auto text-xs text-slate-500">~{readTime} min read</span>
           </div>
         </div>
@@ -135,14 +237,49 @@ export function PostEditor({ initial, onSave, onUploadCover }: Props) {
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-slate-700">Cover Image</p>
-            {coverImage ? <a href={coverImage} className="text-xs text-[var(--color-primary)]" target="_blank">View</a> : null}
+            {coverImage ? (
+              <a
+                href={coverImage}
+                className="text-xs text-(--color-primary)"
+                target="_blank"
+                rel="noreferrer"
+              >
+                View
+              </a>
+            ) : null}
           </div>
-          <Input type="file" accept="image/*" className="mt-2" onChange={handleCoverUpload} />
-          {coverImage ? <p className="mt-2 text-xs text-slate-500">Uploaded</p> : null}
+          <div className="mt-3">
+            <UploadDropzone
+              endpoint="coverImage"
+              onClientUploadComplete={(files) => {
+                const url = extractUploadUrl((files?.[0] ?? null) as UploadedFileLike | null);
+                if (!url) {
+                  setError("Cover upload finished, but no URL was returned.");
+                  return;
+                }
+                setCoverImage(url);
+              }}
+              onUploadError={(uploadError: Error) => {
+                setError(uploadError.message);
+              }}
+            />
+          </div>
+          {coverImage ? (
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <p className="text-xs text-slate-500">Cover image uploaded.</p>
+              <Button
+                variant="ghost"
+                className="h-8 px-2 text-xs text-rose-600"
+                onClick={() => setCoverImage(null)}
+              >
+                Remove
+              </Button>
+            </div>
+          ) : null}
         </div>
 
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-        <Button onClick={handleSave} disabled={saving} className="w-full">
+        <Button onClick={handleSave} disabled={saving || !editor} className="w-full">
           {saving ? "Saving..." : "Save"}
         </Button>
       </div>

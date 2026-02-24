@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, Menu, Search, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { NavItem } from "@/lib/content";
 import type { ServiceCatalogItem } from "@/lib/types";
 import { CTA_BUTTONS } from "@/config/routes";
@@ -20,6 +20,7 @@ export function SiteHeader({ navItems, services }: SiteHeaderProps) {
   const [desktopMenu, setDesktopMenu] = useState<DesktopMenu>(null);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const [mobileRegisterOpen, setMobileRegisterOpen] = useState(false);
+  const closeDesktopMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hasServices = services.length > 0;
 
@@ -32,6 +33,32 @@ export function SiteHeader({ navItems, services }: SiteHeaderProps) {
   function toggleDesktopMenu(menu: Exclude<DesktopMenu, null>) {
     setDesktopMenu((current) => (current === menu ? null : menu));
   }
+
+  function openDesktopMenu(menu: Exclude<DesktopMenu, null>) {
+    if (closeDesktopMenuTimer.current) {
+      clearTimeout(closeDesktopMenuTimer.current);
+      closeDesktopMenuTimer.current = null;
+    }
+    setDesktopMenu(menu);
+  }
+
+  function scheduleDesktopMenuClose() {
+    if (closeDesktopMenuTimer.current) {
+      clearTimeout(closeDesktopMenuTimer.current);
+    }
+    closeDesktopMenuTimer.current = setTimeout(() => {
+      setDesktopMenu(null);
+      closeDesktopMenuTimer.current = null;
+    }, 160);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (closeDesktopMenuTimer.current) {
+        clearTimeout(closeDesktopMenuTimer.current);
+      }
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
@@ -66,8 +93,8 @@ export function SiteHeader({ navItems, services }: SiteHeaderProps) {
                 <div
                   key={item.label}
                   className="relative"
-                  onMouseEnter={() => setDesktopMenu("services")}
-                  onMouseLeave={() => setDesktopMenu(null)}
+                  onMouseEnter={() => openDesktopMenu("services")}
+                  onMouseLeave={scheduleDesktopMenuClose}
                 >
                   <button
                     type="button"
@@ -127,8 +154,8 @@ export function SiteHeader({ navItems, services }: SiteHeaderProps) {
           {hasServices ? (
             <div
               className="relative"
-              onMouseEnter={() => setDesktopMenu("register")}
-              onMouseLeave={() => setDesktopMenu(null)}
+              onMouseEnter={() => openDesktopMenu("register")}
+              onMouseLeave={scheduleDesktopMenuClose}
             >
               <button
                 type="button"
@@ -290,4 +317,3 @@ export function SiteHeader({ navItems, services }: SiteHeaderProps) {
     </header>
   );
 }
-

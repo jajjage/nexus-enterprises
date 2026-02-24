@@ -1,3 +1,5 @@
+import { subscribeToNewsletterAction } from "@/lib/subscribe-action";
+
 export function NewsletterCta() {
   return (
     <section id="newsletter" className="section-space bg-[var(--color-surface)]">
@@ -9,7 +11,10 @@ export function NewsletterCta() {
             practical insights for business growth.
           </p>
 
-          <form className="mx-auto mt-7 flex max-w-xl flex-col gap-3 sm:flex-row" action="#" method="post">
+          <form
+            className="mx-auto mt-7 flex max-w-xl flex-col gap-3 sm:flex-row"
+            action={subscribeToNewsletterAction}
+          >
             <label htmlFor="email" className="sr-only">
               Email address
             </label>

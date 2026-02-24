@@ -10,6 +10,50 @@ import {
 import { getCheckoutServiceBySlug } from "@/lib/services";
 import { sendPaymentConfirmationEmail } from "@/lib/email-templates";
 
+async function notifyPaymentConfirmed(params: {
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  serviceName: string;
+  amountKobo: number;
+  trackingToken: string;
+}) {
+  const recipient = params.customerEmail.trim();
+  if (!recipient) {
+    console.warn("Skipping payment confirmation email: missing recipient", {
+      orderId: params.orderId,
+      orderNumber: params.orderNumber,
+    });
+    return;
+  }
+
+  try {
+    const emailResult = await sendPaymentConfirmationEmail({
+      customerName: params.customerName,
+      customerEmail: recipient,
+      orderNumber: params.orderNumber,
+      serviceName: params.serviceName,
+      amount: params.amountKobo / 100,
+      trackingToken: params.trackingToken,
+    });
+
+    if (!emailResult.sent) {
+      console.error("Payment confirmation email was not delivered", {
+        orderId: params.orderId,
+        orderNumber: params.orderNumber,
+        reason: emailResult.reason,
+      });
+    }
+  } catch (error) {
+    console.error("Payment confirmation email failed unexpectedly", {
+      orderId: params.orderId,
+      orderNumber: params.orderNumber,
+      error,
+    });
+  }
+}
+
 /**
  * Handle Paystack webhook events
  * Webhook is called when payment is verified on Paystack servers
@@ -97,22 +141,15 @@ export async function POST(request: NextRequest) {
             },
           });
 
-          // Send email
-          try {
-            await sendPaymentConfirmationEmail({
-              customerName: existingOrder.clientName,
-              customerEmail: existingOrder.clientEmail,
-              orderNumber: existingOrder.orderNumber,
-              serviceName: existingOrder.serviceName,
-              amount: existingOrder.amountKobo / 100,
-              trackingToken: existingOrder.trackingToken,
-              trackingUrl: `${process.env.SITE_URL || "http://localhost:3000"}/track/${
-                existingOrder.trackingToken
-              }`,
-            });
-          } catch (emailError) {
-            console.error("Failed to send payment confirmation email:", emailError);
-          }
+          await notifyPaymentConfirmed({
+            orderId: existingOrder.id,
+            orderNumber: existingOrder.orderNumber,
+            customerName: existingOrder.clientName,
+            customerEmail: existingOrder.clientEmail,
+            serviceName: existingOrder.serviceName,
+            amountKobo: existingOrder.amountKobo ?? 0,
+            trackingToken: existingOrder.trackingToken,
+          });
         }
 
         console.log(
@@ -129,7 +166,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Not a retry payment - process as new order from "Pay Now" flow
+    // For standard pay-now flow, first try to confirm an existing awaiting order by reference.
+    const existingOrder = await prisma.order.findFirst({
+      where: { paymentReference: reference },
+    });
+
+    if (existingOrder) {
+      if (existingOrder.amountKobo === null || amount !== existingOrder.amountKobo) {
+        console.error(
+          `Amount mismatch for existing order: expected ${existingOrder.amountKobo}, got ${amount}`,
+        );
+        return NextResponse.json(
+          { error: "Amount mismatch" },
+          { status: 400 },
+        );
+      }
+
+      // Order already exists - update status if it's awaiting payment
+      if (existingOrder.status === "AWAITING_PAYMENT") {
+        await prisma.order.update({
+          where: { id: existingOrder.id },
+          data: {
+            status: "PAYMENT_CONFIRMED",
+            paymentProvider: "PAYSTACK",
+            logs: {
+              create: {
+                status: "PAYMENT_CONFIRMED",
+                note: `Payment confirmed via webhook (Reference: ${reference})`,
+              },
+            },
+          },
+        });
+
+        await notifyPaymentConfirmed({
+          orderId: existingOrder.id,
+          orderNumber: existingOrder.orderNumber,
+          customerName: existingOrder.clientName,
+          customerEmail: existingOrder.clientEmail,
+          serviceName: existingOrder.serviceName,
+          amountKobo: existingOrder.amountKobo ?? 0,
+          trackingToken: existingOrder.trackingToken,
+        });
+      }
+
+      console.log(
+        `Payment confirmation processed for existing order: ${existingOrder.id}`,
+        reference
+      );
+      return NextResponse.json({ received: true });
+    }
+
+    // Legacy fallback: create paid order from webhook payload when no pending order exists.
     if (!name || !phone || !serviceSlug) {
       console.error("Missing required metadata in webhook", payload);
       return NextResponse.json(
@@ -156,52 +243,6 @@ export async function POST(request: NextRequest) {
         { error: "Amount mismatch" },
         { status: 400 }
       );
-    }
-
-    // Check if order with this reference already exists
-    const existingOrder = await prisma.order.findFirst({
-      where: { paymentReference: reference },
-    });
-
-    if (existingOrder) {
-      // Order already exists - update status if it's awaiting payment
-      if (existingOrder.status === "AWAITING_PAYMENT") {
-        await prisma.order.update({
-          where: { id: existingOrder.id },
-          data: {
-            status: "PAYMENT_CONFIRMED",
-            logs: {
-              create: {
-                status: "PAYMENT_CONFIRMED",
-                note: `Payment confirmed via webhook (Reference: ${reference})`,
-              },
-            },
-          },
-        });
-
-        // Send email
-        try {
-          await sendPaymentConfirmationEmail({
-            customerName: existingOrder.clientName,
-            customerEmail: existingOrder.clientEmail,
-            orderNumber: existingOrder.orderNumber,
-            serviceName: existingOrder.serviceName,
-            amount: existingOrder.amountKobo ? existingOrder.amountKobo / 100 : 0,
-            trackingToken: existingOrder.trackingToken,
-            trackingUrl: `${process.env.SITE_URL || "http://localhost:3000"}/track/${
-              existingOrder.trackingToken
-            }`,
-          });
-        } catch (emailError) {
-          console.error("Failed to send payment confirmation email:", emailError);
-        }
-      }
-
-      console.log(
-        `Payment confirmation processed for existing order: ${existingOrder.id}`,
-        reference
-      );
-      return NextResponse.json({ received: true });
     }
 
     // Create the order with PAYMENT_CONFIRMED status
@@ -263,23 +304,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send payment confirmation email
-    try {
-      await sendPaymentConfirmationEmail({
-        customerName: name,
-        customerEmail: customerData.customer?.email || "",
-        orderNumber: order.orderNumber,
-        serviceName: service.title,
-        amount: amount / 100, // Convert back to Naira
-        trackingToken: order.trackingToken,
-        trackingUrl: `${process.env.SITE_URL || "http://localhost:3000"}/track/${
-          order.trackingToken
-        }`,
-      });
-    } catch (emailError) {
-      console.error("Failed to send payment confirmation email:", emailError);
-      // Don't fail the webhook for email errors
-    }
+    await notifyPaymentConfirmed({
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      customerName: name,
+      customerEmail: customerData.customer?.email || "",
+      serviceName: service.title,
+      amountKobo: amount,
+      trackingToken: order.trackingToken,
+    });
 
     console.log(`Order created successfully: ${order.id}`, {
       orderNumber: order.orderNumber,

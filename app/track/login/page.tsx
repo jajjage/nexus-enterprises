@@ -19,6 +19,15 @@ function TrackLoginForm() {
     server_error: "An error occurred. Please try again.",
   };
 
+  const isRedirectError = (err: unknown) => {
+    if (!err || typeof err !== "object") return false;
+    const maybeRedirect = err as { digest?: unknown; message?: unknown };
+    return (
+      (typeof maybeRedirect.digest === "string" && maybeRedirect.digest.includes("NEXT_REDIRECT")) ||
+      (typeof maybeRedirect.message === "string" && maybeRedirect.message.includes("NEXT_REDIRECT"))
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -33,7 +42,7 @@ function TrackLoginForm() {
       await setClientSession(token.trim());
     } catch (err) {
       setIsLoading(false);
-      if (err instanceof Error && err.message.includes("NEXT_REDIRECT")) {
+      if (isRedirectError(err)) {
         // Redirection happened, component will unmount
       } else {
         setError("An error occurred. Please try again.");

@@ -44,27 +44,27 @@ export const trustIndicators: TrustIndicator[] = [
 export const partnerLogos: PartnerLogo[] = [
   {
     name: "CAC",
-    image: "https://via.placeholder.com/180x64?text=CAC",
+    image: "cac.png",
     href: "https://www.cac.gov.ng",
   },
   {
     name: "FIRS",
-    image: "https://via.placeholder.com/180x64?text=FIRS",
+    image: "firs.png",
     href: "https://www.firs.gov.ng",
   },
   {
     name: "SCUML",
-    image: "https://via.placeholder.com/180x64?text=SCUML",
+    image: "scuml.png",
     href: "https://scuml.org",
   },
   {
     name: "NIPC",
-    image: "https://via.placeholder.com/180x64?text=NIPC",
+    image: "nipc.png",
     href: "https://www.nipc.gov.ng",
   },
   {
     name: "SMEDAN",
-    image: "https://via.placeholder.com/180x64?text=SMEDAN",
+    image: "smedan.png",
     href: "https://www.smedan.gov.ng",
   },
 ];

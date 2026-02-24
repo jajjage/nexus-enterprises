@@ -26,15 +26,16 @@ function normalizeTrackingInput(input: string): string {
 }
 
 export async function setClientSession(token: string) {
+  const normalizedInput = normalizeTrackingInput(token);
+
+  if (!normalizedInput) {
+    redirect("/track/login?error=invalid_token");
+  }
+
+  let order: { id: string; trackingToken: string } | null = null;
   try {
-    const normalizedInput = normalizeTrackingInput(token);
-
-    if (!normalizedInput) {
-      redirect("/track/login?error=invalid_token");
-    }
-
     // Accept either tracking token or order number.
-    const order = await prisma.order.findFirst({
+    order = await prisma.order.findFirst({
       where: {
         OR: [
           {
@@ -53,25 +54,36 @@ export async function setClientSession(token: string) {
       },
       select: { id: true, trackingToken: true },
     });
+  } catch (error) {
+    console.error("[setClientSession] Failed to query order", {
+      normalizedInput,
+      error,
+    });
+    redirect("/track/login?error=server_error");
+  }
 
-    if (!order) {
-      redirect("/track/login?error=invalid_token");
-    }
+  if (!order) {
+    redirect("/track/login?error=invalid_token");
+  }
 
-    // Create JWT payload
-    const payload = {
-      orderId: order.id,
-      trackingToken: order.trackingToken,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 days
-    };
+  const payload = {
+    orderId: order.id,
+    trackingToken: order.trackingToken,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 days
+  };
 
-    // Sign the JWT
-    const jwtToken = await new jose.SignJWT(payload)
+  let jwtToken = "";
+  try {
+    jwtToken = await new jose.SignJWT(payload)
       .setProtectedHeader({ alg: "HS256" })
       .sign(JWT_SECRET);
+  } catch (error) {
+    console.error("[setClientSession] Failed to sign JWT", error);
+    redirect("/track/login?error=server_error");
+  }
 
-    // Set the secure HTTP-only cookie
+  try {
     const cookieStore = await cookies();
     cookieStore.set({
       name: "client_session",
@@ -82,13 +94,10 @@ export async function setClientSession(token: string) {
       path: "/",
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
-
-    redirect("/track");
   } catch (error) {
-    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
-      throw error;
-    }
-    console.error("[setClientSession] Error:", error);
+    console.error("[setClientSession] Failed to set session cookie", error);
     redirect("/track/login?error=server_error");
   }
+
+  redirect("/track");
 }

@@ -106,7 +106,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
 
               <button
                 type="submit"
-                className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-[var(--color-primary)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--color-primary)]/90"
+                className="inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-lg bg-[var(--color-primary)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--color-primary)]/90"
               >
                 Sign In
               </button>

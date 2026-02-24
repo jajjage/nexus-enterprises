@@ -13,9 +13,13 @@ const mocks = vi.hoisted(() => ({
   redirect: vi.fn((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`);
   }),
+  sendOrderPlacedAwaitingPaymentEmail: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("@/lib/email-templates", () => ({
+  sendOrderPlacedAwaitingPaymentEmail: mocks.sendOrderPlacedAwaitingPaymentEmail,
+}));
 
 import { createOrderAction } from "@/app/services/[service-slug]/actions";
 import { placeOrder, prepareCheckout } from "@/app/services/[service-slug]/checkout-action";
@@ -48,6 +52,8 @@ describe.sequential("service checkout actions", () => {
 
   beforeEach(() => {
     mocks.redirect.mockClear();
+    mocks.sendOrderPlacedAwaitingPaymentEmail.mockReset();
+    mocks.sendOrderPlacedAwaitingPaymentEmail.mockResolvedValue({ sent: true });
   });
 
   afterAll(async () => {
@@ -105,6 +111,14 @@ describe.sequential("service checkout actions", () => {
     expect(order?.serviceName).toBe("Checkout Published Service");
     expect(order?.amountKobo).toBe(600000);
     expect(order?.logs.length).toBeGreaterThan(0);
+    expect(mocks.sendOrderPlacedAwaitingPaymentEmail).toHaveBeenCalledTimes(1);
+    expect(mocks.sendOrderPlacedAwaitingPaymentEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customerEmail: email,
+        serviceName: "Checkout Published Service",
+        trackingToken: result.trackingToken,
+      }),
+    );
   });
 
   it("placeOrder writes an OrderLog entry", async () => {
@@ -123,6 +137,16 @@ describe.sequential("service checkout actions", () => {
 
     expect(order?.logs[0]?.status).toBe("AWAITING_PAYMENT");
     expect(order?.logs[0]?.note).toContain("Awaiting payment");
+  });
+
+  it("placeOrder still succeeds when notification email fails", async () => {
+    mocks.sendOrderPlacedAwaitingPaymentEmail.mockRejectedValueOnce(new Error("SMTP down"));
+    const email = `${prefix}-mail-failure@example.test`;
+
+    const result = await placeOrder(buildFormData(publishedSlug, { email }));
+
+    expect(result.success).toBe(true);
+    expect(mocks.sendOrderPlacedAwaitingPaymentEmail).toHaveBeenCalledTimes(1);
   });
 
   it("createOrderAction redirects to tracking page with token", async () => {

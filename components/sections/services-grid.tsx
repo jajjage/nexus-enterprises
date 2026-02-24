@@ -1,71 +1,82 @@
 import Link from "next/link";
-import type { ServiceCatalogItem } from "@/lib/types";
+import type { Post } from "@prisma/client";
 
 type ServicesGridProps = {
-  services: Array<
-    Pick<ServiceCatalogItem, "id" | "slug" | "title" | "summary" | "category" | "imageUrl" | "amountKobo">
-  >;
+  posts: Array<Pick<Post, "id" | "slug" | "title" | "excerpt" | "coverImage" | "createdAt">>;
 };
 
-export function ServicesGrid({ services }: ServicesGridProps) {
-  const formatNaira = (amountKobo: number | null) => {
-    if (amountKobo === null) return "Price on request";
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-    }).format(amountKobo / 100);
-  };
-
+export function ServicesGrid({ posts }: ServicesGridProps) {
   return (
     <section id="services" className="section-space bg-[var(--color-surface)]">
       <div className="site-container">
-        <div className="mb-10 text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-secondary)]">
-            What We Do
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold text-[var(--color-primary)] sm:text-4xl">
-            Our Core Services
-          </h2>
+        <div className="mb-10 flex items-end justify-between gap-4">
+          <header>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">Resources</p>
+            <h2 className="mt-3 text-3xl font-semibold text-emerald-800 sm:text-4xl">
+              Latest News &amp; Events
+            </h2>
+            <p className="mt-2 text-base text-slate-600">Stay updated with the latest developments</p>
+          </header>
+          <Link
+            href="/blog"
+            className="inline-flex shrink-0 text-sm font-semibold text-emerald-700 transition hover:underline"
+          >
+            View all →
+          </Link>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {services.map((service) => (
-            <article
-              key={service.id}
-              className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
-            >
-              <div className="h-44 overflow-hidden">
-                <img
-                  src={service.imageUrl}
-                  alt={service.title}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="inline-flex rounded-full bg-[var(--color-primary)]/10 px-3 py-1 text-xs font-semibold text-[var(--color-primary)]">
-                    {service.category}
-                  </span>
-                  <span className="text-xs text-[var(--color-secondary)]">
-                    {formatNaira(service.amountKobo)}
-                  </span>
+        {posts.length ? (
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {posts.map((post) => (
+              <article
+                key={post.id}
+                className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+              >
+                {post.coverImage ? (
+                  <div className="h-44 overflow-hidden bg-slate-100">
+                    <img
+                      src={post.coverImage}
+                      alt={post.title}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : null}
+                <div className="p-5">
+                  <div className="flex items-center gap-3 text-xs text-[var(--color-secondary)]">
+                    <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 font-semibold text-emerald-700">
+                      News
+                    </span>
+                    <span>
+                      {new Date(post.createdAt).toLocaleDateString(undefined, {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-4 text-xl font-semibold leading-snug text-[var(--color-primary)]">
+                    {post.title}
+                  </h3>
+                  {post.excerpt ? (
+                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{post.excerpt}</p>
+                  ) : null}
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="mt-4 inline-flex text-sm font-semibold text-[var(--color-accent)] transition hover:underline"
+                  >
+                    Read more -&gt;
+                  </Link>
                 </div>
-
-                <h3 className="mt-4 text-xl font-semibold leading-snug text-[var(--color-primary)]">
-                  {service.title}
-                </h3>
-                <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{service.summary}</p>
-                <Link
-                  href={`/services/${service.slug}`}
-                  className="mt-4 inline-flex text-sm font-semibold text-[var(--color-accent)] transition hover:underline"
-                >
-                  Read more -&gt;
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-slate-200 bg-white p-8 text-sm text-slate-600">
+            No published posts yet.
+          </div>
+        )}
       </div>
     </section>
   );

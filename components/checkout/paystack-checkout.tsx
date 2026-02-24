@@ -27,6 +27,14 @@ export function PaystackCheckout({
   });
   const [error, setError] = useState<string | null>(null);
   const [paystackLoaded, setPaystackLoaded] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+  const [placedOrder, setPlacedOrder] = useState<{
+    orderNumber: string;
+    trackingToken: string;
+    trackingUrl: string;
+    email: string;
+  } | null>(null);
+  const trackingDisplayId = placedOrder?.orderNumber ?? "";
 
   // Load Paystack script
   useEffect(() => {
@@ -79,17 +87,34 @@ export function PaystackCheckout({
 
       const result = await placeOrder(formDataObj);
 
-      // Redirect to tracking page
-      alert(
-        `Order ${result.orderNumber} placed! You can pay anytime from your tracking page.`
-      );
-      window.location.href = result.trackingUrl;
+      setPlacedOrder({
+        orderNumber: result.orderNumber,
+        trackingToken: result.trackingToken,
+        trackingUrl: result.trackingUrl,
+        email: formData.email,
+      });
+      setCopyState("idle");
     } catch (err) {
       const message = err instanceof Error ? err.message : "An error occurred";
       setError(message);
       console.error("Place order error:", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCopyTrackingId = async () => {
+    if (!placedOrder) return;
+
+    try {
+      await navigator.clipboard.writeText(placedOrder.orderNumber);
+      setCopyState("copied");
+      setTimeout(() => {
+        window.location.href = placedOrder.trackingUrl;
+      }, 700);
+    } catch (err) {
+      console.error("Clipboard copy failed:", err);
+      setCopyState("error");
     }
   };
 
@@ -122,9 +147,12 @@ export function PaystackCheckout({
         amount: checkout.amount, // in kobo
         ref: checkout.paymentReference,
         currency: "NGN",
+        metadata: checkout.metadata,
         onClose: () => {
           setIsPaying(false);
-          setError("Payment cancelled. Your order wasn't placed yet. Try again or place an order without paying.");
+          setError(
+            `Payment cancelled. Your order (${checkout.orderNumber}) is saved and awaiting payment. You can complete payment later from your tracking page.`,
+          );
         },
         onSuccess: (response: PaystackResponse) => {
           console.log("Payment successful!", response);
@@ -133,9 +161,9 @@ export function PaystackCheckout({
             "Payment successful! Your order is being processed. Check your email for order details."
           );
           setFormData({ name: "", email: "", phone: "", companyName: "" });
-          // Redirect home after a delay
+          // Redirect to tracking page while webhook confirmation finalizes.
           setTimeout(() => {
-            window.location.href = "/";
+            window.location.href = checkout.trackingUrl;
           }, 2000);
         },
       });
@@ -263,6 +291,49 @@ export function PaystackCheckout({
         </p>
       </div>
 
+      {placedOrder ? (
+        <div className="order-modal-backdrop" role="presentation">
+          <div className="order-modal" role="dialog" aria-modal="true" aria-label="Order placed">
+            <h4>Order placed successfully</h4>
+            <p>
+              We have sent a confirmation email to <strong>{placedOrder.email}</strong>.
+            </p>
+            <p>Copy your tracking ID below to keep it safe.</p>
+
+            <div className="tracking-token-box">{trackingDisplayId}</div>
+            <p className="order-number">Order Number: {placedOrder.orderNumber}</p>
+
+            <div className="modal-actions">
+              <Button type="button" onClick={handleCopyTrackingId}>
+                Copy Tracking ID
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  window.location.href = placedOrder.trackingUrl;
+                }}
+              >
+                Go to Tracking Page
+              </Button>
+            </div>
+
+            <p className="copy-state">
+              {copyState === "copied" ? "Copied. Redirecting to tracking page..." : null}
+              {copyState === "error" ? "Copy failed. Use the button below to continue." : null}
+            </p>
+
+            <button
+              type="button"
+              className="close-modal-btn"
+              onClick={() => setPlacedOrder(null)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <style jsx>{`
         .checkout-container {
           max-width: 500px;
@@ -385,6 +456,80 @@ export function PaystackCheckout({
           color: #666;
           text-align: center;
           margin-top: 15px;
+        }
+
+        .order-modal-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(15, 23, 42, 0.58);
+          padding: 20px;
+        }
+
+        .order-modal {
+          width: 100%;
+          max-width: 520px;
+          border-radius: 12px;
+          background: #fff;
+          padding: 24px;
+          box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+        }
+
+        .order-modal h4 {
+          margin: 0 0 12px;
+          color: #142850;
+          font-size: 22px;
+        }
+
+        .order-modal p {
+          margin: 8px 0;
+          color: #334155;
+          line-height: 1.5;
+        }
+
+        .tracking-token-box {
+          margin-top: 14px;
+          border: 1px dashed #94a3b8;
+          border-radius: 8px;
+          background: #f8fafc;
+          padding: 12px;
+          font-size: 13px;
+          color: #0f172a;
+          word-break: break-all;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+            "Courier New", monospace;
+        }
+
+        .order-number {
+          margin-top: 8px;
+          font-size: 13px;
+          color: #475569;
+        }
+
+        .modal-actions {
+          margin-top: 16px;
+          display: grid;
+          gap: 10px;
+        }
+
+        .copy-state {
+          min-height: 18px;
+          margin-top: 8px;
+          font-size: 13px;
+          color: #0f766e;
+        }
+
+        .close-modal-btn {
+          margin-top: 8px;
+          border: none;
+          background: transparent;
+          color: #475569;
+          font-size: 13px;
+          text-decoration: underline;
+          cursor: pointer;
         }
       `}</style>
     </div>

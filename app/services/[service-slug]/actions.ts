@@ -1,5 +1,8 @@
 "use server";
 
+// Legacy checkout entrypoint kept for compatibility.
+// Active order creation flow is implemented in `checkout-action.ts`.
+
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";

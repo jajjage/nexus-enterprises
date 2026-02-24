@@ -61,7 +61,7 @@ describe.sequential("Paystack webhook route", () => {
         status: "success",
       },
     });
-    mocks.sendPaymentConfirmationEmail.mockResolvedValue(undefined);
+    mocks.sendPaymentConfirmationEmail.mockResolvedValue({ sent: true });
   });
 
   afterAll(async () => {
@@ -228,6 +228,13 @@ describe.sequential("Paystack webhook route", () => {
 
     expect(updated?.status).toBe("PAYMENT_CONFIRMED");
     expect(updated?.logs.some((log) => log.status === "PAYMENT_CONFIRMED")).toBe(true);
+    expect(mocks.sendPaymentConfirmationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customerEmail: order.clientEmail,
+        orderNumber: order.orderNumber,
+        trackingToken: order.trackingToken,
+      }),
+    );
   });
 
   it("updates existing order on RETRY payment path", async () => {
@@ -256,6 +263,13 @@ describe.sequential("Paystack webhook route", () => {
     const updated = await prisma.order.findUnique({ where: { id: order.id } });
     expect(updated?.status).toBe("PAYMENT_CONFIRMED");
     expect(updated?.paymentReference).toBe(reference);
+    expect(mocks.sendPaymentConfirmationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customerEmail: order.clientEmail,
+        orderNumber: order.orderNumber,
+        trackingToken: order.trackingToken,
+      }),
+    );
   });
 
   it("creates a new paid order for pay-now flow with service snapshots", async () => {
@@ -287,6 +301,13 @@ describe.sequential("Paystack webhook route", () => {
     expect(order?.serviceSlug).toBe(serviceSlug);
     expect(order?.serviceName).toBe("Webhook Test Service");
     expect(order?.status).toBe("PAYMENT_CONFIRMED");
+    expect(mocks.sendPaymentConfirmationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customerEmail: email,
+        orderNumber: order?.orderNumber,
+        trackingToken: order?.trackingToken,
+      }),
+    );
   });
 
   it("does not fail webhook processing when email sending fails", async () => {

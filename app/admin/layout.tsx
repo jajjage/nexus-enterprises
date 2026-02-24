@@ -9,6 +9,11 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+  const hasAdminSession = Boolean(session?.user);
+
+  if (!hasAdminSession) {
+    return <>{children}</>;
+  }
 
   return (
     <>

@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
-export async function listPublishedPosts() {
+export async function listPublishedPosts(limit?: number) {
   return prisma.post.findMany({
     where: { published: true },
     orderBy: { createdAt: "desc" },
+    take: limit,
   });
 }
 

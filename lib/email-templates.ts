@@ -1,7 +1,25 @@
-export function welcomeEmail() {
+import { ORDER_STATUS_LABELS, type OrderStatusValue } from "@/lib/order-status";
+import { sendEmailBestEffort, type EmailSendResult } from "@/lib/mailer";
+import { buildTrackingUrl } from "@/lib/urls";
+
+type EmailTemplate = {
+  subject: string;
+  html: string;
+  text: string;
+};
+
+function formatNaira(amount: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+  }).format(amount);
+}
+
+export function newsletterWelcomeEmail(): EmailTemplate {
   return {
     subject: "Welcome to Nexus Updates",
-    html: `<p>Thanks for subscribing to Nexus Enterprises updates.</p>` ,
+    html: `<p>Thanks for subscribing to Nexus Enterprises updates.</p><p>We will send practical compliance and business updates as they become available.</p>`,
+    text: "Thanks for subscribing to Nexus Enterprises updates.",
   };
 }
 
@@ -15,21 +33,23 @@ export function postBroadcastEmail({
   excerpt?: string | null;
   url: string;
   coverImage?: string | null;
-}) {
+}): EmailTemplate {
+  const summary = excerpt ?? "Read the latest update.";
   return {
     subject: `New post: ${title}`,
     html: `
       <div>
         <h2>${title}</h2>
         ${coverImage ? `<p><img src="${coverImage}" alt="${title}" style="max-width:100%;height:auto" /></p>` : ""}
-        <p>${excerpt ?? "Read the latest update."}</p>
+        <p>${summary}</p>
         <p><a href="${url}">Read the full post</a></p>
       </div>
     `,
+    text: `${title}\n\n${summary}\n\n${url}`,
   };
 }
 
-export function paymentConfirmationEmail({
+export function orderPlacedAwaitingPaymentEmail({
   customerName,
   orderNumber,
   serviceName,
@@ -41,69 +61,129 @@ export function paymentConfirmationEmail({
   serviceName: string;
   amount: number;
   trackingUrl: string;
-}) {
-  const formattedAmount = new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-  }).format(amount);
+}): EmailTemplate {
+  const formattedAmount = formatNaira(amount);
 
   return {
-    subject: `Payment Confirmed - Order ${orderNumber}`,
+    subject: `Order Received - ${orderNumber}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">Payment Confirmed ✓</h2>
-        
+        <h2>Order Received</h2>
         <p>Hello ${customerName},</p>
-        
-        <p>Thank you for your payment! We've successfully received your payment for <strong>${serviceName}</strong>.</p>
-        
-        <div style="background-color: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0;">
-          <p style="margin: 5px 0;"><strong>Order Number:</strong> ${orderNumber}</p>
-          <p style="margin: 5px 0;"><strong>Service:</strong> ${serviceName}</p>
-          <p style="margin: 5px 0;"><strong>Amount Paid:</strong> ${formattedAmount}</p>
+        <p>We have received your order for <strong>${serviceName}</strong>.</p>
+        <p>Your order is currently <strong>Awaiting Payment</strong>.</p>
+        <div style="background:#f7f7f7;padding:16px;border-radius:8px;margin:16px 0;">
+          <p><strong>Order Number:</strong> ${orderNumber}</p>
+          <p><strong>Service:</strong> ${serviceName}</p>
+          <p><strong>Amount:</strong> ${formattedAmount}</p>
         </div>
-        
-        <p>Your order is now being processed. You can track the progress of your order using the link below:</p>
-        
-        <p style="text-align: center; margin: 30px 0;">
-          <a href="${trackingUrl}" style="background-color: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-            Track Your Order
-          </a>
-        </p>
-        
-        <p>If you have any questions, please don't hesitate to reach out to us.</p>
-        
-        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;" />
-        
-        <p style="font-size: 12px; color: #666;">
-          This is an automated message. Please do not reply to this email.
-        </p>
+        <p>You can track this order at any time using the link below:</p>
+        <p><a href="${trackingUrl}">Track your order</a></p>
       </div>
     `,
+    text: `Order received\nOrder: ${orderNumber}\nService: ${serviceName}\nAmount: ${formattedAmount}\nTrack: ${trackingUrl}`,
   };
 }
 
-// Server-side function to send payment confirmation email
-export async function sendPaymentConfirmationEmail({
+export function paymentConfirmedEmail({
+  customerName,
+  orderNumber,
+  serviceName,
+  amount,
+  trackingUrl,
+}: {
+  customerName: string;
+  orderNumber: string;
+  serviceName: string;
+  amount: number;
+  trackingUrl: string;
+}): EmailTemplate {
+  const formattedAmount = formatNaira(amount);
+
+  return {
+    subject: `Payment Confirmed - ${orderNumber}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Payment Confirmed</h2>
+        <p>Hello ${customerName},</p>
+        <p>We have confirmed your payment for <strong>${serviceName}</strong>.</p>
+        <div style="background:#f7f7f7;padding:16px;border-radius:8px;margin:16px 0;">
+          <p><strong>Order Number:</strong> ${orderNumber}</p>
+          <p><strong>Amount Paid:</strong> ${formattedAmount}</p>
+        </div>
+        <p>You can follow progress from your tracking page:</p>
+        <p><a href="${trackingUrl}">Track your order</a></p>
+      </div>
+    `,
+    text: `Payment confirmed\nOrder: ${orderNumber}\nService: ${serviceName}\nAmount: ${formattedAmount}\nTrack: ${trackingUrl}`,
+  };
+}
+
+export function adminOrderUpdateEmail({
+  customerName,
+  orderNumber,
+  serviceName,
+  status,
+  note,
+  trackingUrl,
+}: {
+  customerName: string;
+  orderNumber: string;
+  serviceName: string;
+  status: OrderStatusValue;
+  note: string;
+  trackingUrl: string;
+}): EmailTemplate {
+  const statusLabel = ORDER_STATUS_LABELS[status];
+  return {
+    subject: `Order Update - ${orderNumber} (${statusLabel})`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Order Update</h2>
+        <p>Hello ${customerName},</p>
+        <p>There is a new update on your order for <strong>${serviceName}</strong>.</p>
+        <div style="background:#f7f7f7;padding:16px;border-radius:8px;margin:16px 0;">
+          <p><strong>Order Number:</strong> ${orderNumber}</p>
+          <p><strong>Status:</strong> ${statusLabel}</p>
+          <p><strong>Update Note:</strong> ${note}</p>
+        </div>
+        <p><a href="${trackingUrl}">Track your order</a></p>
+      </div>
+    `,
+    text: `Order update\nOrder: ${orderNumber}\nService: ${serviceName}\nStatus: ${statusLabel}\nNote: ${note}\nTrack: ${trackingUrl}`,
+  };
+}
+
+export async function sendNewsletterWelcomeEmail(email: string): Promise<EmailSendResult> {
+  const template = newsletterWelcomeEmail();
+  return sendEmailBestEffort(
+    {
+      to: email,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+    },
+    { event: "newsletter_welcome", recipient: email },
+  );
+}
+
+export async function sendOrderPlacedAwaitingPaymentEmail({
   customerName,
   customerEmail,
   orderNumber,
   serviceName,
   amount,
-  trackingUrl,
+  trackingToken,
 }: {
   customerName: string;
   customerEmail: string;
   orderNumber: string;
   serviceName: string;
   amount: number;
-  trackingUrl: string;
   trackingToken: string;
-}): Promise<void> {
-  const { Resend } = await import("resend");
-  const resend = new Resend(process.env.RESEND_API_KEY);
-
-  const emailTemplate = paymentConfirmationEmail({
+}): Promise<EmailSendResult> {
+  const trackingUrl = buildTrackingUrl(trackingToken);
+  const template = orderPlacedAwaitingPaymentEmail({
     customerName,
     orderNumber,
     serviceName,
@@ -111,10 +191,86 @@ export async function sendPaymentConfirmationEmail({
     trackingUrl,
   });
 
-  await resend.emails.send({
-    from: "notifications@nexus.ng",
-    to: customerEmail,
-    subject: emailTemplate.subject,
-    html: emailTemplate.html,
+  return sendEmailBestEffort(
+    {
+      to: customerEmail,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+    },
+    { event: "order_placed", recipient: customerEmail, orderNumber },
+  );
+}
+
+export async function sendPaymentConfirmationEmail({
+  customerName,
+  customerEmail,
+  orderNumber,
+  serviceName,
+  amount,
+  trackingToken,
+}: {
+  customerName: string;
+  customerEmail: string;
+  orderNumber: string;
+  serviceName: string;
+  amount: number;
+  trackingToken: string;
+}): Promise<EmailSendResult> {
+  const trackingUrl = buildTrackingUrl(trackingToken);
+  const template = paymentConfirmedEmail({
+    customerName,
+    orderNumber,
+    serviceName,
+    amount,
+    trackingUrl,
   });
+
+  return sendEmailBestEffort(
+    {
+      to: customerEmail,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+    },
+    { event: "payment_confirmed", recipient: customerEmail, orderNumber },
+  );
+}
+
+export async function sendAdminOrderUpdateEmail({
+  customerName,
+  customerEmail,
+  orderNumber,
+  serviceName,
+  status,
+  note,
+  trackingToken,
+}: {
+  customerName: string;
+  customerEmail: string;
+  orderNumber: string;
+  serviceName: string;
+  status: OrderStatusValue;
+  note: string;
+  trackingToken: string;
+}): Promise<EmailSendResult> {
+  const trackingUrl = buildTrackingUrl(trackingToken);
+  const template = adminOrderUpdateEmail({
+    customerName,
+    orderNumber,
+    serviceName,
+    status,
+    note,
+    trackingUrl,
+  });
+
+  return sendEmailBestEffort(
+    {
+      to: customerEmail,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+    },
+    { event: "admin_order_update", recipient: customerEmail, orderNumber },
+  );
 }
