@@ -3,6 +3,8 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { navItems } from "@/lib/content";
 import { getPublishedServices } from "@/lib/services";
 
+export const dynamic = "force-dynamic";
+
 export default async function ServicesLayout({
   children,
 }: {

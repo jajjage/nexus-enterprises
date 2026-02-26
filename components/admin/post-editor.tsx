@@ -11,7 +11,7 @@ import Image from "@tiptap/extension-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { estimateReadTime, generateSlug } from "@/lib/blog";
+import { estimateReadTime, generateSlug } from "@/lib/blog-utils";
 import { UploadButton, UploadDropzone } from "@/lib/uploadthing";
 
 export type PostEditorInitial = {

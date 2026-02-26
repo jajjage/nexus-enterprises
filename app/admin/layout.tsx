@@ -3,6 +3,8 @@ import { logoutAction } from "./login/actions";
 import { LogOut } from "lucide-react";
 import { AdminSidebar } from "./admin-sidebar";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({
   children,
 }: {

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { broadcastPost } from "@/lib/newsletter";
-import { generateSlug, estimateReadTime } from "@/lib/blog";
+import { generateSlug, estimateReadTime } from "@/lib/blog-utils";
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
