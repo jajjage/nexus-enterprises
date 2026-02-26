@@ -1,4 +1,4 @@
-export const ORDER_STATUS_OPTIONS = [
+export const ORDER_STATUS_VALUES = [
   "AWAITING_PAYMENT",
   "PAYMENT_CONFIRMED",
   "IN_PROGRESS",
@@ -7,7 +7,16 @@ export const ORDER_STATUS_OPTIONS = [
   "CANCELLED",
 ] as const;
 
-export type OrderStatusValue = (typeof ORDER_STATUS_OPTIONS)[number];
+export type OrderStatusValue = (typeof ORDER_STATUS_VALUES)[number];
+
+// Statuses admins can manually set from the dashboard.
+export const ORDER_STATUS_OPTIONS: ReadonlyArray<Exclude<OrderStatusValue, "ACTION_REQUIRED">> = [
+  "AWAITING_PAYMENT",
+  "PAYMENT_CONFIRMED",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "CANCELLED",
+];
 
 export const ORDER_STATUS_LABELS: Record<OrderStatusValue, string> = {
   AWAITING_PAYMENT: "Awaiting Payment",

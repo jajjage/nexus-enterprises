@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  adminOrderRequestEmail,
   adminOrderUpdateEmail,
   newsletterWelcomeEmail,
   orderPlacedAwaitingPaymentEmail,
@@ -55,5 +56,21 @@ describe("email templates", () => {
     expect(adminUpdate.subject).toContain("Action Required");
     expect(adminUpdate.html).toContain("Please upload your signed forms.");
     expect(adminUpdate.text).toContain("Track");
+  });
+
+  it("builds admin request-info template with current status and request message", () => {
+    const request = adminOrderRequestEmail({
+      customerName: "Aisha",
+      orderNumber: "NEX-20260222-0003",
+      serviceName: "Tax Filing",
+      currentStatus: "IN_PROGRESS",
+      message: "Please provide your updated TIN certificate.",
+      trackingUrl: "https://nexus.ng/track/token-3",
+    });
+
+    expect(request.subject).toContain("Information Needed");
+    expect(request.html).toContain("updated TIN certificate");
+    expect(request.html).toContain("In Progress");
+    expect(request.text).toContain("token-3");
   });
 });

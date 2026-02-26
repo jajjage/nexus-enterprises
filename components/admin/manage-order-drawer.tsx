@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { updateOrderAction } from "@/app/admin/orders/actions";
+import { requestOrderInfoAction, updateOrderAction } from "@/app/admin/orders/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,11 @@ export function ManageOrderDrawer({ orders }: ManageOrderDrawerProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [status, setStatus] = useState<OrderStatusValue>("AWAITING_PAYMENT");
   const [note, setNote] = useState("");
-  const [error, setError] = useState("");
+  const [requestMessage, setRequestMessage] = useState("");
+  const [statusError, setStatusError] = useState("");
+  const [requestError, setRequestError] = useState("");
+  const [requestSuccess, setRequestSuccess] = useState("");
+  const [activeAction, setActiveAction] = useState<"status" | "request" | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -43,21 +47,35 @@ export function ManageOrderDrawer({ orders }: ManageOrderDrawerProps) {
 
   function openDrawer(order: AdminOrderRow) {
     setSelectedId(order.id);
-    setStatus(order.status);
+    const selectableStatus = ORDER_STATUS_OPTIONS.includes(
+      order.status as (typeof ORDER_STATUS_OPTIONS)[number],
+    )
+      ? order.status
+      : "IN_PROGRESS";
+    setStatus(selectableStatus);
     setNote("");
-    setError("");
+    setRequestMessage("");
+    setStatusError("");
+    setRequestError("");
+    setRequestSuccess("");
   }
 
   function closeDrawer() {
     setSelectedId(null);
-    setError("");
+    setStatusError("");
+    setRequestError("");
+    setRequestSuccess("");
     setNote("");
+    setRequestMessage("");
   }
 
-  function onSave() {
+  function onSaveStatus() {
     if (!selectedOrder) return;
 
+    setStatusError("");
+    setRequestSuccess("");
     startTransition(async () => {
+      setActiveAction("status");
       try {
         await updateOrderAction({
           orderId: selectedOrder.id,
@@ -67,7 +85,32 @@ export function ManageOrderDrawer({ orders }: ManageOrderDrawerProps) {
         closeDrawer();
         router.refresh();
       } catch {
-        setError("Unable to save update. Check your note and try again.");
+        setStatusError("Unable to save update. Check your note and try again.");
+      } finally {
+        setActiveAction(null);
+      }
+    });
+  }
+
+  function onSendRequest() {
+    if (!selectedOrder) return;
+
+    setRequestError("");
+    setRequestSuccess("");
+    startTransition(async () => {
+      setActiveAction("request");
+      try {
+        await requestOrderInfoAction({
+          orderId: selectedOrder.id,
+          message: requestMessage,
+        });
+        setRequestMessage("");
+        setRequestSuccess("Request email sent to client.");
+        router.refresh();
+      } catch {
+        setRequestError("Unable to send request. Check your message and try again.");
+      } finally {
+        setActiveAction(null);
       }
     });
   }
@@ -183,7 +226,7 @@ export function ManageOrderDrawer({ orders }: ManageOrderDrawerProps) {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">Update Note</label>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">Status Update Note</label>
                   <Input
                     value={note}
                     onChange={(event) => setNote(event.target.value)}
@@ -191,10 +234,38 @@ export function ManageOrderDrawer({ orders }: ManageOrderDrawerProps) {
                   />
                 </div>
 
-                {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+                {statusError ? <p className="text-sm text-rose-600">{statusError}</p> : null}
 
-                <Button className="w-full" onClick={onSave} disabled={pending || note.trim().length < 3}>
-                  {pending ? "Saving..." : "Save Update"}
+                <Button className="w-full" onClick={onSaveStatus} disabled={pending || note.trim().length < 3}>
+                  {pending && activeAction === "status" ? "Saving..." : "Save Status Update"}
+                </Button>
+
+                <hr className="my-2 border-slate-200" />
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Request Information from Client
+                  </label>
+                  <Input
+                    value={requestMessage}
+                    onChange={(event) => setRequestMessage(event.target.value)}
+                    placeholder="Please share your updated CAC document."
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Sends an email and logs this request without changing status.
+                  </p>
+                </div>
+
+                {requestError ? <p className="text-sm text-rose-600">{requestError}</p> : null}
+                {requestSuccess ? <p className="text-sm text-emerald-700">{requestSuccess}</p> : null}
+
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={onSendRequest}
+                  disabled={pending || requestMessage.trim().length < 3}
+                >
+                  {pending && activeAction === "request" ? "Sending..." : "Send Request Email"}
                 </Button>
               </div>
             </>

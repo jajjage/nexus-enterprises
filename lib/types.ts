@@ -58,3 +58,8 @@ export type AdminUpdateInput = {
   status: OrderStatusValue;
   note: string;
 };
+
+export type AdminRequestInput = {
+  orderId: string;
+  message: string;
+};

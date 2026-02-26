@@ -154,6 +154,41 @@ export function adminOrderUpdateEmail({
   };
 }
 
+export function adminOrderRequestEmail({
+  customerName,
+  orderNumber,
+  serviceName,
+  currentStatus,
+  message,
+  trackingUrl,
+}: {
+  customerName: string;
+  orderNumber: string;
+  serviceName: string;
+  currentStatus: OrderStatusValue;
+  message: string;
+  trackingUrl: string;
+}): EmailTemplate {
+  const statusLabel = ORDER_STATUS_LABELS[currentStatus];
+  return {
+    subject: `Information Needed - ${orderNumber}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Additional Information Needed</h2>
+        <p>Hello ${customerName},</p>
+        <p>We need a quick update from you to continue your order for <strong>${serviceName}</strong>.</p>
+        <div style="background:#f7f7f7;padding:16px;border-radius:8px;margin:16px 0;">
+          <p><strong>Order Number:</strong> ${orderNumber}</p>
+          <p><strong>Current Status:</strong> ${statusLabel}</p>
+          <p><strong>What we need from you:</strong> ${message}</p>
+        </div>
+        <p><a href="${trackingUrl}">Open your tracking page</a></p>
+      </div>
+    `,
+    text: `Additional information needed\nOrder: ${orderNumber}\nService: ${serviceName}\nCurrent status: ${statusLabel}\nMessage: ${message}\nTrack: ${trackingUrl}`,
+  };
+}
+
 export async function sendNewsletterWelcomeEmail(email: string): Promise<EmailSendResult> {
   const template = newsletterWelcomeEmail();
   return sendEmailBestEffort(
@@ -272,5 +307,43 @@ export async function sendAdminOrderUpdateEmail({
       text: template.text,
     },
     { event: "admin_order_update", recipient: customerEmail, orderNumber },
+  );
+}
+
+export async function sendAdminOrderRequestEmail({
+  customerName,
+  customerEmail,
+  orderNumber,
+  serviceName,
+  currentStatus,
+  message,
+  trackingToken,
+}: {
+  customerName: string;
+  customerEmail: string;
+  orderNumber: string;
+  serviceName: string;
+  currentStatus: OrderStatusValue;
+  message: string;
+  trackingToken: string;
+}): Promise<EmailSendResult> {
+  const trackingUrl = buildTrackingUrl(trackingToken);
+  const template = adminOrderRequestEmail({
+    customerName,
+    orderNumber,
+    serviceName,
+    currentStatus,
+    message,
+    trackingUrl,
+  });
+
+  return sendEmailBestEffort(
+    {
+      to: customerEmail,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+    },
+    { event: "admin_order_request_info", recipient: customerEmail, orderNumber },
   );
 }
